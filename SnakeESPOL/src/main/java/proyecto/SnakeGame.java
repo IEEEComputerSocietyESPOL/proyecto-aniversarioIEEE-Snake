@@ -1,13 +1,21 @@
 package proyecto;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -18,6 +26,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -34,6 +43,15 @@ public class SnakeGame extends Application {
     private Circle food;
     private Random random;
     private Snake snake;
+
+    // Instancia de la clase HistorialPuntajes
+    private HistorialPuntajes historialPuntajes;
+
+    // Lista de puntajes
+
+    private List<Puntaje> puntajes;
+
+
     // Agregar las imágenes de la comida en la carpeta resources/proyecto con la
     // extensión correspondiente
     private String images[] = { "apple.png", "golden-apple.png" };
@@ -83,6 +101,9 @@ public class SnakeGame extends Application {
                 score.setText("Game Over " + (snake.getLength() - INIT_LENGTH));
                 newSnake();
                 newFood();
+
+                // Método para guardar puntajes cuando sea necesario
+                historialPuntajes.guardarPuntajes();
             }
         });
     }
@@ -151,8 +172,60 @@ public class SnakeGame extends Application {
             scene.setRoot(menu());
         });
         scores.getChildren().add(back);
+
+        // Crear la tabla de puntuaciones
+        TableView<Puntaje> tableView = new TableView<>();
+        tableView.setPrefWidth(300);
+
+        TableColumn<Puntaje, String> playerNameColumn = new TableColumn<>("Nombre");
+        playerNameColumn.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+
+        TableColumn<Puntaje, Integer> scoreColumn = new TableColumn<>("Puntuación");
+        scoreColumn.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
+
+        tableView.getColumns().addAll(playerNameColumn, scoreColumn);
+        tableView.setItems(FXCollections.observableArrayList(puntajes));
+
+        scores.getChildren().add(tableView);
         return scores;
     }
+
+    private void showPuntajesWindow() {
+        // Crear una nueva ventana emergente para mostrar los puntajes
+        Stage puntajesStage = new Stage();
+        puntajesStage.initModality(Modality.APPLICATION_MODAL);
+        puntajesStage.setTitle("Tabla de Puntajes");
+
+        // Crear el contenido de la ventana emergente (el TableView con los puntajes)
+        VBox puntajesLayout = new VBox();
+        puntajesLayout.setSpacing(10);
+        puntajesLayout.setPadding(new Insets(10));
+        TableView<Puntaje> tableView = createPuntajesTableView();
+        puntajesLayout.getChildren().addAll(tableView);
+
+        // Crear la escena y mostrar la ventana emergente
+        Scene puntajesScene = new Scene(puntajesLayout);
+        puntajesStage.setScene(puntajesScene);
+        puntajesStage.showAndWait();
+    }
+
+    private TableView<Puntaje> createPuntajesTableView() {
+        TableView<Puntaje> tableView = new TableView<>();
+        tableView.setPrefWidth(300);
+
+        TableColumn<Puntaje, String> playerNameColumn = new TableColumn<>("Nombre");
+        playerNameColumn.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+
+        TableColumn<Puntaje, Integer> scoreColumn = new TableColumn<>("Puntuación");
+        scoreColumn.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
+
+        tableView.getColumns().addAll(playerNameColumn, scoreColumn);
+        tableView.setItems(FXCollections.observableArrayList(puntajes));
+
+        return tableView;
+    }
+
+
 
     private Pane menu() {
         mainMenu = new VBox();
@@ -160,7 +233,8 @@ public class SnakeGame extends Application {
         mainMenu.getChildren().add(new Text("Menú Principal"));
         Button scores = new Button("Puntajes");
         scores.setOnMouseClicked(eh -> {
-            scene.setRoot(scores());
+            showPuntajesWindow();
+            //scene.setRoot(scores());
         });
         Button start = new Button("Comenzar");
         start.setOnMouseClicked(eh -> {
@@ -173,6 +247,11 @@ public class SnakeGame extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Snake Game!");
+
+        // Inicializar el objeto HistorialPuntajes
+        historialPuntajes = new HistorialPuntajes("puntajes.txt");
+        historialPuntajes.cargarPuntajes();
+
         scene.setRoot(menu());
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
@@ -180,8 +259,13 @@ public class SnakeGame extends Application {
 
     }
 
+    
+
+
     public static void main(String[] args) {
         launch(args);
     }
+    
+    
 
 }

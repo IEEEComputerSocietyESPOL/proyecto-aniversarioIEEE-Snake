@@ -1,3 +1,4 @@
+package proyecto;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +19,7 @@ public HistorialPuntajes(String RutaArchivo) {
 public void guardarPuntajes() {
     try (FileWriter escribir = new FileWriter(RutaArchivo)) {
         for (Puntaje puntaje : puntajes) {
-            escribir.write(puntaje.getName() + "," + puntaje.getScore() + "\n");
+            escribir.write(puntaje.getNombre() + "," + puntaje.getPuntaje() + "\n");
         }
     } catch (IOException e) {
         e.printStackTrace();
@@ -31,7 +32,7 @@ public void guardarPuntajes() {
  */
 public void agregarPuntaje(Puntaje puntaje) {
     puntajes.add(puntaje);
-    Collections.sort(scores);
+    Collections.sort(puntajes);
 }
 
 
@@ -41,12 +42,12 @@ public void cargarPuntajes() {
     puntajes.clear();
     try (BufferedReader lector = new BufferedReader(new FileReader(RutaArchivo))) {
         String line;
-        while ((line = reader.readLine()) != null) {
+        while ((line = lector.readLine()) != null) {
             String[] data = line.split(",");
             if (data.length == 2) {
                 String nombre = data[0];
                 int puntaje = Integer.parseInt(data[1]);
-                puntajes.add(new Score(nombre, puntaje));
+                puntajes.add(new Puntaje(nombre, puntaje));
             }
         }
     } catch (IOException | NumberFormatException e) {
@@ -55,7 +56,7 @@ public void cargarPuntajes() {
 }
 
 
-public Score PuntajeMax() {
+public Puntaje PuntajeMax() {
     if (puntajes.isEmpty()) {
         return null;
     }

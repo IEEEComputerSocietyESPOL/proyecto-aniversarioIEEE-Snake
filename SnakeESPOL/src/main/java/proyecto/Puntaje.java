@@ -1,8 +1,10 @@
-public class Puntaje implements Comparable<Score> {
+package proyecto;
+
+public class Puntaje implements Comparable<Puntaje> {
     private String nombre;
     private int puntaje;
 
-    public Score(String nombre, int puntaje) {
+    public Puntaje(String nombre, int puntaje) {
         this.nombre = nombre;
         this.puntaje = puntaje;
     }
@@ -16,7 +18,7 @@ public class Puntaje implements Comparable<Score> {
     }
 
     @Override
-    public int Comparacion(Puntaje otroPuntaje) {
+    public int compareTo(Puntaje otroPuntaje) {
         // Ordenamos los puntajes de mayor a menor.
         return Integer.compare(otroPuntaje.puntaje, this.puntaje);
     }
