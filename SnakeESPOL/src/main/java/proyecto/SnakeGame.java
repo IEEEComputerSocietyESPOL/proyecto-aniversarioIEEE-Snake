@@ -171,10 +171,11 @@ public class SnakeGame extends Application {
         temporizador.setFill(Color.WHITE);
 
         // Creamos el Timeline para el funcionamiento del temporizador.
-        Timeline timeline = new Timeline(new KeyFrame(Duration.ZERO, e -> {
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             segundos++;
             temporizador.setText(segundosAtiempo(segundos));
-        }), new KeyFrame(Duration.seconds(1)));
+        })
+                                        );
         timeline.setCycleCount(Timeline.INDEFINITE);
         // Iniciamos el Timeline
         timeline.play();
