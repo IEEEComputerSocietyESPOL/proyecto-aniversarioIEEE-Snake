@@ -2,6 +2,12 @@ package proyecto;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
@@ -13,9 +19,12 @@ public class Snake extends Circle {
     private static final int STEP = 8;
 
     public Snake(double d, double d1, double d2) {
-        super(d, d1, d2);
+        // Cabeza de la serpiente de un color aleatorio
+        super(d, d1, d2, Color.rgb((int) (Math.random() * 255), (int) (Math.random() * 255),
+                (int) (Math.random() * 255)));
         tails = new ArrayList<>();
         currentDirection = Direction.UP;
+
     }
 
     public void step() {
@@ -68,12 +77,25 @@ public class Snake extends Circle {
         return tails.get(length - 1);
     }
 
-    public void eat(Circle food) {
+    public void eat(Circle food, Pane pane) {
         Circle tail = endTail();
+        food.setRadius(5);
         food.setCenterX(tail.getCenterX());
         food.setCenterY(tail.getCenterY());
-        food.setFill(Color.BLACK);
+        // hacer que el food.setFill genere un color aleatorio
+        food.setFill(Color.rgb((int) (Math.random() * 255), (int) (Math.random() * 255),
+                (int) (Math.random() * 255)));
         tails.add(length++, food);
+        ArrayList<ImageView> imgs = new ArrayList<>();
+        for (Node n : pane.getChildren()) {
+            if (n instanceof ImageView) {
+                ImageView img = (ImageView) n;
+                imgs.add(img);
+            }
+        }
+        Platform.runLater(() -> {
+            pane.getChildren().removeAll(imgs);
+        });
     }
 
 }

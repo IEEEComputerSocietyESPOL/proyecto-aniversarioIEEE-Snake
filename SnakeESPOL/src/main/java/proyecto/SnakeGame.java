@@ -1,11 +1,15 @@
 package proyecto;
 
+import java.util.ArrayList;
 import java.util.Random;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
@@ -17,15 +21,10 @@ import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
-/**
- *
- * @author Amanuel
- */
 public class SnakeGame extends Application {
     private static final Rectangle2D screenBounds = Screen.getPrimary().getBounds();
     private static final int PREFERRED_HIGHT = (int) screenBounds.getHeight() - 100;
     private static final int PREFERRED_WIDTH = PREFERRED_HIGHT + 100;
-    private static final int RADIUS = 5;
     private static final int INIT_LENGTH = 5;
     private static Scene scene = new Scene(new Pane());
     private static Pane game;
@@ -35,19 +34,30 @@ public class SnakeGame extends Application {
     private Circle food;
     private Random random;
     private Snake snake;
+    // Agregar las imágenes de la comida en la carpeta resources/proyecto con la
+    // extensión correspondiente
+    private String images[] = { "apple.png", "golden-apple.png" };
 
     private void newFood() {
-        food = new Circle(random.nextInt(PREFERRED_WIDTH), random.nextInt(PREFERRED_HIGHT), RADIUS);
-        food.setFill(Color.RED);
+        int posX = random.nextInt(PREFERRED_WIDTH);
+        int posY = random.nextInt(PREFERRED_HIGHT);
+        food = new Circle(posX, posY, 0);
+        Image image = new Image(getClass().getResourceAsStream(images[random.nextInt(images.length)]));
+        ImageView img = new ImageView(image);
+        img.setFitWidth(20);
+        img.setFitHeight(20);
+        img.relocate(posX - 10, posY - 10);
         game.getChildren().add(food);
+        game.getChildren().add(img);
     }
 
     private void newSnake() {
-        snake = new Snake(PREFERRED_WIDTH / 2, PREFERRED_HIGHT / 2, RADIUS + 2);
+        snake = new Snake(PREFERRED_WIDTH / 2, PREFERRED_HIGHT / 2, 7);
         game.getChildren().add(snake);
         for (int i = 0; i < INIT_LENGTH; i++) {
             newFood();
-            snake.eat(food);
+            snake.eat(food, game);
+
         }
     }
 
@@ -64,7 +74,18 @@ public class SnakeGame extends Application {
             snake.step();
             adjustLocation();
             if (hit()) {
-                snake.eat(food);
+                snake.eat(food, game);
+                score.setText("Score: " + (snake.getLength() - INIT_LENGTH));
+                newFood();
+            } else if (gameOver()) {
+                game.getChildren().clear();
+                game.getChildren().add(score);
+                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH));
+                newSnake();
+                newFood();
+            }
+            if (hit()) {
+                snake.eat(food, game);
                 score.setText("Score: " + (snake.getLength() - INIT_LENGTH));
                 newFood();
             } else if (gameOver()) {
