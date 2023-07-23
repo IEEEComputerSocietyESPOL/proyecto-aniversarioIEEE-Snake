@@ -1,9 +1,7 @@
 package proyecto;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -11,7 +9,6 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
@@ -27,7 +24,6 @@ import javafx.scene.layout.BackgroundPosition;
 import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -37,37 +33,34 @@ import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
 import javafx.scene.control.TextInputDialog;
 import java.util.Optional;
 
 public class SnakeGame extends Application {
-
+    // Ajuste de la ventana
     private static final Rectangle2D screenBounds = Screen.getPrimary().getBounds();
     private static final int PREFERRED_HIGHT = (int) screenBounds.getHeight() - 100;
     private static final int PREFERRED_WIDTH = PREFERRED_HIGHT + 100;
+    // Longitud inicial de la serpiente
     private static final int INIT_LENGTH = 5;
+    // Paneles para la GUI
     private static Scene scene = new Scene(new Pane());
-    private static Pane game;
-    private static VBox mainMenu;
-    private static VBox scores;
-    private int segundos = 0;
-    private Text score;
-    private Text temporizador = new Text(0, 64, "00:00:00");
-    private Circle food;
-    private Random random;
-    private Snake snake;
-
-    // Instancia de la clase HistorialPuntajes
-    private HistorialPuntajes historialPuntajes;
-
-    // Lista de puntajes
-
-    private List<Puntaje> puntajes;
-
-    // Agregar las imágenes de la comida en la carpeta resources/proyecto con la
-    // extensión correspondiente
-    private String images[] = { "apple.png", "golden-apple.png", "AP.png", "brownie.png",
+    private static Pane game; // Juego
+    private static VBox mainMenu; // Menú principal
+    private Text score; // Puntuación del juego
+    private Text temporizador = new Text(0, 64, "00:00:00"); // Temporizador
+    private Circle food; // Comida
+    private int segundos = 0; // Segundos del temporizador
+    private Random random; // Control de aleatoriedad
+    private Snake snake; // Serpiente
+    private static int modificadorVelocidad = 10; // Aumento de velocidad de la serpiente
+    private Thread jugabilidad; // Hilo de ejecución del juego
+    private HistorialPuntajes historialPuntajes; // Manejar el historial de puntajes
+    /*
+     * Agregar las imágenes de la comida en la carpeta resources/proyecto con la
+     * extensión correspondiente
+     */
+    private String images[] = { "AP.png", "brownie.png",
             "empanada.png", "encebollado.png", "menestra2.png", "pastelpn.png", "sanduchepng.png" };
 
     private void newFood() {
@@ -75,21 +68,20 @@ public class SnakeGame extends Application {
         int posY = random.nextInt(PREFERRED_HIGHT);
         food = new Circle(posX, posY, 0);
         Image image = new Image(getClass().getResourceAsStream(images[random.nextInt(images.length)]));
-        ImageView img = new ImageView(image);
-        img.setFitWidth(20);
-        img.setFitHeight(20);
-        img.relocate(posX - 10, posY - 10);
+        ImageView foddImage = new ImageView(image);
+        foddImage.setFitWidth(25);
+        foddImage.setFitHeight(25);
+        foddImage.relocate(posX - 10, posY - 10); // Centrar la imagen en la comida
         game.getChildren().add(food);
-        game.getChildren().add(img);
+        game.getChildren().add(foddImage);
     }
 
     private void newSnake() {
-        snake = new Snake(PREFERRED_WIDTH / 2, PREFERRED_HIGHT / 2, 7);
+        snake = new Snake(PREFERRED_WIDTH / 2, PREFERRED_HIGHT / 2, 10); // d2 es el tamaño de la cabeza
         game.getChildren().add(snake);
-        for (int i = 0; i < INIT_LENGTH; i++) {
+        for (int i = 0; i < INIT_LENGTH; i++) { // Agregar la cola
             newFood();
             snake.eat(food, game);
-
         }
     }
 
@@ -98,58 +90,48 @@ public class SnakeGame extends Application {
     }
 
     private boolean gameOver() {
-        if (hit()) {
-            game.getChildren().clear();
-            TextInputDialog dialog = new TextInputDialog("Ingrese su nombre");
-            dialog.setTitle("Game Over");
-            dialog.setHeaderText("Has perdido");
-            dialog.setContentText("Por favor, ingrese su nombre:");
-
-            Optional<String> name = dialog.showAndWait();
-            menu();
-            if (name.isPresent()) {
-                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH) + " - " + name.get());
-            }
-            newSnake();
-            newFood();
-            
-        } else if (snake.eatSelf()) {
-            game.getChildren().clear();
-            TextInputDialog dialog = new TextInputDialog("Ingrese su nombre");
-            dialog.setTitle("Game Over");
-            dialog.setHeaderText("Has perdido");
-            dialog.setContentText("Por favor, ingrese su nombre:");
-
-            Optional<String> name = dialog.showAndWait();
-            menu();
-            if (name.isPresent()) {
-                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH) + " - " + name.get());
-            }
-            newSnake();
-            newFood();
-            
-        }
         return snake.eatSelf();
     }
 
     private void move() {
         Platform.runLater(() -> {
+            int puntos = snake.getLength() - INIT_LENGTH;
             snake.step();
             adjustLocation();
             if (hit()) {
                 snake.eat(food, game);
-                score.setText("Score: " + (snake.getLength() - INIT_LENGTH));
+                score.setText("Score: " + puntos);
                 newFood();
-            } else if (gameOver()) {
-                game.getChildren().clear();
-                game.getChildren().add(score);
-                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH));
-                newSnake();
-                newFood();
+            }
+            if (gameOver()) {
+                jugabilidad.interrupt(); // detiene el juego
+                Platform.runLater(() -> {
 
-                // Método para guardar puntajes cuando sea necesario
-                historialPuntajes.agregarPuntaje(new Puntaje("otro", snake.getLength() - INIT_LENGTH));
-                historialPuntajes.guardarPuntajes();
+                    TextInputDialog dialog = new TextInputDialog();
+                    dialog.setTitle("Game Over");
+                    dialog.setHeaderText("Puntaje Obtenido: " + puntos);
+                    dialog.setContentText("Jugador:");
+                    Optional<String> name = dialog.showAndWait();
+
+                    if (name.get() != null && !name.get().isEmpty()) {
+                        Puntaje actual = new Puntaje(name.get(), puntos);
+                        List<Puntaje> puntajes = historialPuntajes.getPuntajes();
+                        if (historialPuntajes.getPuntajes().contains(actual)) {
+                            Puntaje anterior = puntajes.get(puntajes.indexOf(actual));
+                            // Si el jugador existe y su puntaje actual es mayor, se actualiza el puntaje
+                            if (anterior.getPuntaje() < actual.getPuntaje()) {
+                                historialPuntajes.getPuntajes().remove(anterior);
+                                historialPuntajes.agregarPuntaje(actual);
+                                historialPuntajes.guardarPuntajes();
+                            }
+                            // Si es un jugador nuevo, agrega directamente al archivo
+                        } else {
+                            historialPuntajes.agregarPuntaje(actual);
+                            historialPuntajes.guardarPuntajes();
+                        }
+                    }
+                    scene.setRoot(menu());
+                });
             }
         });
     }
@@ -170,48 +152,49 @@ public class SnakeGame extends Application {
     private Pane game() {
         game = new Pane();
         game.setPrefSize(PREFERRED_WIDTH, PREFERRED_HIGHT);
-        random = new Random();
-
-        newSnake();
-        newFood();
-
-        score = new Text(0, 32, "Score: 0");
-        score.setFont(Font.font(25));
-        score.setFill(Color.WHITE);
-        temporizador.setFont(Font.font(15));
-        temporizador.setFill(Color.WHITE);
-        game.getChildren().add(score);
-
-        // Agregamos la imagen para el fondo del juego.
+        // Agregamos la imagen para el fondo del juego
         Image image = new Image(getClass().getResourceAsStream("Background2.jpg"));
         BackgroundImage fondo = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
                 new BackgroundSize(PREFERRED_WIDTH, PREFERRED_HIGHT, false, false, false, false));
         game.setBackground(new Background(fondo));
 
+        random = new Random();
+        newSnake();
+        newFood();
+
+        // Configuración de puntaje y tiempo transcurrido
+        score = new Text(0, 32, "Score: 0");
+        score.setFont(Font.font(15));
+        score.setFill(Color.WHITE);
+        temporizador.setFont(Font.font(15));
+        temporizador.setFill(Color.WHITE);
+
         // Creamos el Timeline para el funcionamiento del temporizador.
-        Timeline timeline = new Timeline(
-                new KeyFrame(Duration.ZERO, e -> {
-                    segundos++;
-                    temporizador.setText(segundosAtiempo(segundos));
-                }),
-                new KeyFrame(Duration.seconds(1)));
+        Timeline timeline = new Timeline(new KeyFrame(Duration.ZERO, e -> {
+            segundos++;
+            temporizador.setText(segundosAtiempo(segundos));
+        }), new KeyFrame(Duration.seconds(1)));
         timeline.setCycleCount(Timeline.INDEFINITE);
         // Iniciamos el Timeline
         timeline.play();
 
-        game.getChildren().add(temporizador);
+        game.getChildren().addAll(score, temporizador);
 
+        // Hilo de ejecución del juego
         Runnable r = () -> {
             try {
                 for (;;) {
                     move();
-                    Thread.sleep(100 / (1 + (snake.getLength() / 10)));
+                    int puntos = snake.getLength() - INIT_LENGTH;
+                    // Aumentar la velocidad de la serpiente cada modificadorVelocidad puntos
+                    Thread.sleep(100 / (1 + (puntos / modificadorVelocidad)));
                 }
             } catch (InterruptedException ie) {
             }
         };
 
+        // Controlador de movimiento
         scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             KeyCode code = event.getCode();
             if (code == KeyCode.UP || code == KeyCode.W) {
@@ -223,74 +206,39 @@ public class SnakeGame extends Application {
             } else if (code == KeyCode.RIGHT || code == KeyCode.D) {
                 snake.setCurrentDirection(Direction.RIGHT);
             }
-
         });
 
-        Thread th = new Thread(r);
-        th.setDaemon(true);
-        th.start();
+        jugabilidad = new Thread(r);
+        jugabilidad.setDaemon(true);
+        jugabilidad.start();
         return game;
     }
 
-    private Pane scores() {
-        scores = new VBox();
-        scores.setPrefSize(PREFERRED_WIDTH, PREFERRED_HIGHT);
-        scores.getChildren().add(new Text("Puntajes"));
-        Button back = new Button("Volver");
-        back.setOnMouseClicked(eh -> {
-            scene.setRoot(menu());
-        });
-        scores.getChildren().add(back);
-
-        // Crear la tabla de puntuaciones
-        TableView<Puntaje> tableView = new TableView<>();
-        tableView.setPrefWidth(300);
-
-        TableColumn<Puntaje, String> playerNameColumn = new TableColumn<>("Nombre");
-        playerNameColumn.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-
-        TableColumn<Puntaje, Integer> scoreColumn = new TableColumn<>("Puntuación");
-        scoreColumn.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
-
-        tableView.getColumns().addAll(playerNameColumn, scoreColumn);
-        tableView.setItems(FXCollections.observableArrayList(puntajes));
-
-        scores.getChildren().add(tableView);
-        return scores;
-    }
-
+    // Crear una nueva ventana emergente para mostrar los puntajes
     private void showPuntajesWindow() {
-        // Crear una nueva ventana emergente para mostrar los puntajes
         Stage puntajesStage = new Stage();
-        puntajesStage.initModality(Modality.APPLICATION_MODAL);
+        puntajesStage.initModality(Modality.WINDOW_MODAL);
         puntajesStage.setTitle("Tabla de Puntajes");
-
-        // Crear el contenido de la ventana emergente (el TableView con los puntajes)
+        puntajesStage.setResizable(false);
         VBox puntajesLayout = new VBox();
         puntajesLayout.setSpacing(10);
         puntajesLayout.setPadding(new Insets(10));
-        TableView<Puntaje> tableView = createPuntajesTableView();
+        TableView<Puntaje> tableView = obtenerTabla();
         puntajesLayout.getChildren().addAll(tableView);
-
-        // Crear la escena y mostrar la ventana emergente
         Scene puntajesScene = new Scene(puntajesLayout);
         puntajesStage.setScene(puntajesScene);
         puntajesStage.showAndWait();
     }
 
-    private TableView<Puntaje> createPuntajesTableView() {
+    private TableView<Puntaje> obtenerTabla() {
         TableView<Puntaje> tableView = new TableView<>();
         tableView.setPrefWidth(300);
-
         TableColumn<Puntaje, String> playerNameColumn = new TableColumn<>("Nombre");
         playerNameColumn.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-
         TableColumn<Puntaje, Integer> scoreColumn = new TableColumn<>("Puntuación");
         scoreColumn.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
-
         tableView.getColumns().addAll(playerNameColumn, scoreColumn);
-        // tableView.setItems(FXCollections.observableArrayList(puntajes));
-        tableView.getItems().addAll(historialPuntajes.getPuntajes());
+        tableView.getItems().addAll(historialPuntajes.getPuntajes().subList(0, 10));
         return tableView;
     }
 
@@ -299,18 +247,16 @@ public class SnakeGame extends Application {
         mainMenu.setPrefSize(PREFERRED_WIDTH, PREFERRED_HIGHT);
         mainMenu.getChildren().add(new Text("Menú Principal"));
         Button scores = new Button("Puntajes");
-        scores.setOnMouseClicked(eh -> {
-            showPuntajesWindow();
-            // scene.setRoot(scores());
-        });
+        scores.setDefaultButton(false);
+        scores.setOnMouseClicked(eh -> showPuntajesWindow());
         Button start = new Button("Comenzar");
-        start.setOnMouseClicked(eh -> {
-            scene.setRoot(game());
-        });
+        start.setDefaultButton(true);
+        start.setOnMouseClicked(eh -> scene.setRoot(game()));
         mainMenu.getChildren().addAll(scores, start);
         return mainMenu;
     }
 
+    // Configuración para el temporizador
     private String segundosAtiempo(int segundos) {
         int hora = segundos / 3600;
         int minuto = (segundos % 3600) / 60;
@@ -322,20 +268,15 @@ public class SnakeGame extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Snake Game!");
-
-        // Inicializar el objeto HistorialPuntajes
         historialPuntajes = new HistorialPuntajes("puntajes.csv");
         historialPuntajes.cargarPuntajes();
-
         scene.setRoot(menu());
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
-
     }
 
     public static void main(String[] args) {
         launch(args);
     }
-
 }

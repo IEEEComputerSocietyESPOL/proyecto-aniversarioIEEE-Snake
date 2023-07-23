@@ -24,7 +24,11 @@ public class Puntaje implements Comparable<Puntaje> {
     }
 
     @Override
-    public String toString() {
-        return nombre + ": " + puntaje;
+    public boolean equals(Object obj) {
+        if (obj instanceof Puntaje) {
+            Puntaje otroPuntaje = (Puntaje) obj;
+            return this.nombre.equals(otroPuntaje.nombre);
+        }
+        return false;
     }
 }

@@ -33,6 +33,7 @@ public class HistorialPuntajes {
     }
 
     public List<Puntaje> getPuntajes() {
+        Collections.sort(puntajes);
         return puntajes;
     }
 

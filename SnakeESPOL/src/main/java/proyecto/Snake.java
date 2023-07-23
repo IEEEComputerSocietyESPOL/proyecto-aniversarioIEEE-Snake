@@ -2,10 +2,8 @@ package proyecto;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javafx.application.Platform;
 import javafx.scene.Node;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -79,13 +77,15 @@ public class Snake extends Circle {
 
     public void eat(Circle food, Pane pane) {
         Circle tail = endTail();
-        food.setRadius(5);
+        // El cuerpo de la serpiente siempre es 2 pixeles mas pequeño que la cabeza
+        food.setRadius(this.getRadius() - 2);
         food.setCenterX(tail.getCenterX());
         food.setCenterY(tail.getCenterY());
-        // hacer que el food.setFill genere un color aleatorio
+        // hacer que el cuerpo tenga varios colores
         food.setFill(Color.rgb((int) (Math.random() * 255), (int) (Math.random() * 255),
                 (int) (Math.random() * 255)));
         tails.add(length++, food);
+        // Eliminar todas las imágenes de comida de la pantalla
         ArrayList<ImageView> imgs = new ArrayList<>();
         for (Node n : pane.getChildren()) {
             if (n instanceof ImageView) {
