@@ -76,8 +76,8 @@ public class SnakeGame extends Application {
         food = new Circle(posX, posY, 0);
         Image image = new Image(getClass().getResourceAsStream(images[random.nextInt(images.length)]));
         ImageView img = new ImageView(image);
-        img.setFitWidth(20);
-        img.setFitHeight(20);
+        img.setFitWidth(40);
+        img.setFitHeight(40);
         img.relocate(posX - 10, posY - 10);
         game.getChildren().add(food);
         game.getChildren().add(img);
