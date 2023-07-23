@@ -3,8 +3,13 @@ package proyecto;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -16,7 +21,13 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -38,7 +49,7 @@ public class SnakeGame extends Application {
     private static VBox scores;
     private int segundos = 0;
     private Text score;
-    private Text temporizador = new Text("00:00:00");
+    private Text temporizador = new Text(0, 64, "00:00:00");
     private Circle food;
     private Random random;
     private Snake snake;
@@ -50,11 +61,10 @@ public class SnakeGame extends Application {
 
     private List<Puntaje> puntajes;
 
-
     // Agregar las imágenes de la comida en la carpeta resources/proyecto con la
     // extensión correspondiente
     private String images[] = { "apple.png", "golden-apple.png", "AP.png", "brownie.png",
-        "empanada.png","encebollado.png","menestra2.png","pastelpn.png", "sanduchepng.png" };
+            "empanada.png", "encebollado.png", "menestra2.png", "pastelpn.png", "sanduchepng.png" };
 
     private void newFood() {
         int posX = random.nextInt(PREFERRED_WIDTH);
@@ -103,6 +113,7 @@ public class SnakeGame extends Application {
                 newFood();
 
                 // Método para guardar puntajes cuando sea necesario
+                historialPuntajes.agregarPuntaje(new Puntaje("otro", snake.getLength() - INIT_LENGTH));
                 historialPuntajes.guardarPuntajes();
             }
         });
@@ -131,12 +142,17 @@ public class SnakeGame extends Application {
 
         score = new Text(0, 32, "Score: 0");
         score.setFont(Font.font(25));
+        score.setFill(Color.WHITE);
+        temporizador.setFont(Font.font(15));
+        temporizador.setFill(Color.WHITE);
         game.getChildren().add(score);
-        
+
         // Agregamos la imagen para el fondo del juego.
         Image image = new Image(getClass().getResourceAsStream("Background2.jpg"));
-        BackgroundImage fondo = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
-        game..setBackground(new Background(fondo));
+        BackgroundImage fondo = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(PREFERRED_WIDTH, PREFERRED_HIGHT, false, false, false, false));
+        game.setBackground(new Background(fondo));
 
         // Creamos el Timeline para el funcionamiento del temporizador.
         Timeline timeline = new Timeline(
@@ -144,14 +160,12 @@ public class SnakeGame extends Application {
                     segundos++;
                     temporizador.setText(segundosAtiempo(segundos));
                 }),
-                new KeyFrame(Duration.seconds(1))
-        );
+                new KeyFrame(Duration.seconds(1)));
         timeline.setCycleCount(Timeline.INDEFINITE);
         // Iniciamos el Timeline
         timeline.play();
 
         game.getChildren().add(temporizador);
-
 
         Runnable r = () -> {
             try {
@@ -240,12 +254,10 @@ public class SnakeGame extends Application {
         scoreColumn.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
 
         tableView.getColumns().addAll(playerNameColumn, scoreColumn);
-        tableView.setItems(FXCollections.observableArrayList(puntajes));
-
+        // tableView.setItems(FXCollections.observableArrayList(puntajes));
+        tableView.getItems().addAll(historialPuntajes.getPuntajes());
         return tableView;
     }
-
-
 
     private Pane menu() {
         mainMenu = new VBox();
@@ -254,7 +266,7 @@ public class SnakeGame extends Application {
         Button scores = new Button("Puntajes");
         scores.setOnMouseClicked(eh -> {
             showPuntajesWindow();
-            //scene.setRoot(scores());
+            // scene.setRoot(scores());
         });
         Button start = new Button("Comenzar");
         start.setOnMouseClicked(eh -> {
@@ -264,7 +276,7 @@ public class SnakeGame extends Application {
         return mainMenu;
     }
 
-    private String segundosAtiempo(int segundos){
+    private String segundosAtiempo(int segundos) {
         int hora = segundos / 3600;
         int minuto = (segundos % 3600) / 60;
         int segundo = segundos % 60;
@@ -277,7 +289,7 @@ public class SnakeGame extends Application {
         primaryStage.setTitle("Snake Game!");
 
         // Inicializar el objeto HistorialPuntajes
-        historialPuntajes = new HistorialPuntajes("puntajes.txt");
+        historialPuntajes = new HistorialPuntajes("puntajes.csv");
         historialPuntajes.cargarPuntajes();
 
         scene.setRoot(menu());
@@ -287,13 +299,8 @@ public class SnakeGame extends Application {
 
     }
 
-    
-
-
     public static void main(String[] args) {
         launch(args);
     }
-    
-    
 
 }
