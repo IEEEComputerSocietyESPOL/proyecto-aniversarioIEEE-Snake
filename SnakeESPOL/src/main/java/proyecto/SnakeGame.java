@@ -38,7 +38,11 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import javafx.scene.control.TextInputDialog;
+import java.util.Optional;
+
 public class SnakeGame extends Application {
+
     private static final Rectangle2D screenBounds = Screen.getPrimary().getBounds();
     private static final int PREFERRED_HIGHT = (int) screenBounds.getHeight() - 100;
     private static final int PREFERRED_WIDTH = PREFERRED_HIGHT + 100;
@@ -94,6 +98,37 @@ public class SnakeGame extends Application {
     }
 
     private boolean gameOver() {
+        if (hit()) {
+            game.getChildren().clear();
+            TextInputDialog dialog = new TextInputDialog("Ingrese su nombre");
+            dialog.setTitle("Game Over");
+            dialog.setHeaderText("Has perdido");
+            dialog.setContentText("Por favor, ingrese su nombre:");
+
+            Optional<String> name = dialog.showAndWait();
+            menu();
+            if (name.isPresent()) {
+                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH) + " - " + name.get());
+            }
+            newSnake();
+            newFood();
+            
+        } else if (snake.eatSelf()) {
+            game.getChildren().clear();
+            TextInputDialog dialog = new TextInputDialog("Ingrese su nombre");
+            dialog.setTitle("Game Over");
+            dialog.setHeaderText("Has perdido");
+            dialog.setContentText("Por favor, ingrese su nombre:");
+
+            Optional<String> name = dialog.showAndWait();
+            menu();
+            if (name.isPresent()) {
+                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH) + " - " + name.get());
+            }
+            newSnake();
+            newFood();
+            
+        }
         return snake.eatSelf();
     }
 
