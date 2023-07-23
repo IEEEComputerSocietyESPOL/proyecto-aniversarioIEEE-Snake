@@ -113,7 +113,7 @@ public class SnakeGame extends Application {
                     dialog.setContentText("Jugador:");
                     Optional<String> name = dialog.showAndWait();
 
-                    if (name.get() != null && !name.get().isEmpty()) {
+                    if (name.isPresent() && (name.get() != null && !name.get().isEmpty())) {
                         Puntaje actual = new Puntaje(name.get(), puntos);
                         List<Puntaje> puntajes = historialPuntajes.getPuntajes();
                         if (historialPuntajes.getPuntajes().contains(actual)) {
@@ -238,7 +238,8 @@ public class SnakeGame extends Application {
         TableColumn<Puntaje, Integer> scoreColumn = new TableColumn<>("Puntuación");
         scoreColumn.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
         tableView.getColumns().addAll(playerNameColumn, scoreColumn);
-        tableView.getItems().addAll(historialPuntajes.getPuntajes().subList(0, 10));
+        int lastIndex = historialPuntajes.getPuntajes().size() >= 10 ? 10 : historialPuntajes.getPuntajes().size();
+        tableView.getItems().addAll(historialPuntajes.getPuntajes().subList(0, lastIndex));
         return tableView;
     }
 
