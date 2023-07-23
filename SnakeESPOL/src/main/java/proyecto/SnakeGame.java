@@ -84,17 +84,6 @@ public class SnakeGame extends Application {
                 newSnake();
                 newFood();
             }
-            if (hit()) {
-                snake.eat(food, game);
-                score.setText("Score: " + (snake.getLength() - INIT_LENGTH));
-                newFood();
-            } else if (gameOver()) {
-                game.getChildren().clear();
-                game.getChildren().add(score);
-                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH));
-                newSnake();
-                newFood();
-            }
         });
     }
 
