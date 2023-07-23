@@ -36,7 +36,8 @@ public class SnakeGame extends Application {
     private Snake snake;
     // Agregar las imágenes de la comida en la carpeta resources/proyecto con la
     // extensión correspondiente
-    private String images[] = { "apple.png", "golden-apple.png" };
+    private String images[] = { "apple.png", "golden-apple.png", "AP.png", "brownie.png",
+        "empanada.png","encebollado.png","menestra2.png","pastelpn.png", "sanduchepng.png" };
 
     private void newFood() {
         int posX = random.nextInt(PREFERRED_WIDTH);
@@ -111,6 +112,10 @@ public class SnakeGame extends Application {
         score = new Text(0, 32, "Score: 0");
         score.setFont(Font.font(25));
         game.getChildren().add(score);
+        
+        Image image = new Image(getClass().getResourceAsStream("Background2.jpg"));
+        BackgroundImage fondo = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
+        game..setBackground(new Background(fondo));
 
         Runnable r = () -> {
             try {
