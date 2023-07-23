@@ -1,11 +1,15 @@
 package proyecto;
 
+import java.util.ArrayList;
 import java.util.Random;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
@@ -17,11 +21,15 @@ import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
+import javafx.scene.control.TextInputDialog;
+import java.util.Optional;
+
 /**
  *
- * @author Amanuel
+ * @author Amanuel 
  */
 public class SnakeGame extends Application {
+
     private static final Rectangle2D screenBounds = Screen.getPrimary().getBounds();
     private static final int PREFERRED_HIGHT = (int) screenBounds.getHeight() - 100;
     private static final int PREFERRED_WIDTH = PREFERRED_HIGHT + 100;
@@ -56,6 +64,37 @@ public class SnakeGame extends Application {
     }
 
     private boolean gameOver() {
+        if (hit()) {
+            game.getChildren().clear();
+            TextInputDialog dialog = new TextInputDialog("Ingrese su nombre");
+            dialog.setTitle("Game Over");
+            dialog.setHeaderText("Has perdido");
+            dialog.setContentText("Por favor, ingrese su nombre:");
+
+            Optional<String> name = dialog.showAndWait();
+            menu();
+            if (name.isPresent()) {
+                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH) + " - " + name.get());
+            }
+            newSnake();
+            newFood();
+            
+        } else if (snake.eatSelf()) {
+            game.getChildren().clear();
+            TextInputDialog dialog = new TextInputDialog("Ingrese su nombre");
+            dialog.setTitle("Game Over");
+            dialog.setHeaderText("Has perdido");
+            dialog.setContentText("Por favor, ingrese su nombre:");
+
+            Optional<String> name = dialog.showAndWait();
+            menu();
+            if (name.isPresent()) {
+                score.setText("Game Over " + (snake.getLength() - INIT_LENGTH) + " - " + name.get());
+            }
+            newSnake();
+            newFood();
+            
+        }
         return snake.eatSelf();
     }
 
