@@ -18,8 +18,7 @@ public class Snake extends Circle {
 
     public Snake(double d, double d1, double d2) {
         // Cabeza de la serpiente de un color aleatorio
-        super(d, d1, d2, Color.rgb((int) (Math.random() * 255), (int) (Math.random() * 255),
-                (int) (Math.random() * 255)));
+        super(d, d1, d2, Color.RED);
         tails = new ArrayList<>();
         currentDirection = Direction.UP;
 
@@ -81,7 +80,7 @@ public class Snake extends Circle {
         food.setRadius(this.getRadius() - 2);
         food.setCenterX(tail.getCenterX());
         food.setCenterY(tail.getCenterY());
-        // hacer que el cuerpo tenga varios colores
+        // hacer que el food.setFill genere un color aleatorio
         food.setFill(Color.rgb((int) (Math.random() * 255), (int) (Math.random() * 255),
                 (int) (Math.random() * 255)));
         tails.add(length++, food);
