@@ -5,10 +5,6 @@ import java.util.List;
 import java.util.Random;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -29,6 +25,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class SnakeGame extends Application {
     private static final Rectangle2D screenBounds = Screen.getPrimary().getBounds();
@@ -39,7 +36,9 @@ public class SnakeGame extends Application {
     private static Pane game;
     private static VBox mainMenu;
     private static VBox scores;
+    private int segundos = 0;
     private Text score;
+    private Text temporizador = new Text("00:00:00");
     private Circle food;
     private Random random;
     private Snake snake;
@@ -54,7 +53,8 @@ public class SnakeGame extends Application {
 
     // Agregar las imágenes de la comida en la carpeta resources/proyecto con la
     // extensión correspondiente
-    private String images[] = { "apple.png", "golden-apple.png" };
+    private String images[] = { "apple.png", "golden-apple.png", "AP.png", "brownie.png",
+        "empanada.png","encebollado.png","menestra2.png","pastelpn.png", "sanduchepng.png" };
 
     private void newFood() {
         int posX = random.nextInt(PREFERRED_WIDTH);
@@ -132,6 +132,26 @@ public class SnakeGame extends Application {
         score = new Text(0, 32, "Score: 0");
         score.setFont(Font.font(25));
         game.getChildren().add(score);
+        
+        // Agregamos la imagen para el fondo del juego.
+        Image image = new Image(getClass().getResourceAsStream("Background2.jpg"));
+        BackgroundImage fondo = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
+        game..setBackground(new Background(fondo));
+
+        // Creamos el Timeline para el funcionamiento del temporizador.
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO, e -> {
+                    segundos++;
+                    temporizador.setText(segundosAtiempo(segundos));
+                }),
+                new KeyFrame(Duration.seconds(1))
+        );
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        // Iniciamos el Timeline
+        timeline.play();
+
+        game.getChildren().add(temporizador);
+
 
         Runnable r = () -> {
             try {
@@ -242,6 +262,14 @@ public class SnakeGame extends Application {
         });
         mainMenu.getChildren().addAll(scores, start);
         return mainMenu;
+    }
+
+    private String segundosAtiempo(int segundos){
+        int hora = segundos / 3600;
+        int minuto = (segundos % 3600) / 60;
+        int segundo = segundos % 60;
+
+        return String.format("%02d:%02d:%02d", hora, minuto, segundo);
     }
 
     @Override
