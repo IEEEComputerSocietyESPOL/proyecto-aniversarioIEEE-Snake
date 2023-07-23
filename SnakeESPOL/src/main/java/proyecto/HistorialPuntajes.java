@@ -9,7 +9,7 @@ public class HistorialPuntajes{
 
 
 
-public EncargoPuntaje(String RutaArchivo) {
+public HistorialPuntajes(String RutaArchivo) {
     this.RutaArchivo = RutaArchivo;
     this.puntajes = new ArrayList<>();
 }
