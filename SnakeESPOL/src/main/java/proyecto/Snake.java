@@ -3,6 +3,7 @@ package proyecto;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Platform;
+import javafx.css.converter.PaintConverter;
 import javafx.scene.Node;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
@@ -15,13 +16,29 @@ public class Snake extends Circle {
     private int length = 0;
     private Direction currentDirection;
     private static final int STEP = 8;
+    private static Color parTail = new Color(0, 0, 0, 1);
+    private static Color oddTail = new Color(0, 0, 0, 1);
 
     public Snake(double d, double d1, double d2) {
         // Cabeza de la serpiente de un color aleatorio
-        super(d, d1, d2, Color.RED);
+        super(d, d1, d2);
         tails = new ArrayList<>();
         currentDirection = Direction.UP;
-
+        int r = (int) (Math.random() * 255);
+        int g = 255;
+        int b = (int) (Math.random() * 255);
+        while (g > r && g > b) {
+            g = (int) (Math.random() * 255);
+        }
+        parTail = Color.rgb(r, g, b);
+        r = (int) (Math.random() * 255);
+        g = 255;
+        b = (int) (Math.random() * 255);
+        while (g > r && g > b) {
+            g = (int) (Math.random() * 255);
+        }
+        oddTail = Color.rgb(r, g, b);
+        this.setFill(oddTail);
     }
 
     public void step() {
@@ -81,8 +98,7 @@ public class Snake extends Circle {
         food.setCenterX(tail.getCenterX());
         food.setCenterY(tail.getCenterY());
         // hacer que el food.setFill genere un color aleatorio
-        food.setFill(Color.rgb((int) (Math.random() * 255), (int) (Math.random() * 255),
-                (int) (Math.random() * 255)));
+        food.setFill(length % 2 == 0 ? parTail : oddTail);
         tails.add(length++, food);
         // Eliminar todas las imágenes de comida de la pantalla
         ArrayList<ImageView> imgs = new ArrayList<>();

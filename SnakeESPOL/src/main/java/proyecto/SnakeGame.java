@@ -29,6 +29,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -39,8 +40,8 @@ import java.util.Optional;
 public class SnakeGame extends Application {
     // Ajuste de la ventana
     private static final Rectangle2D screenBounds = Screen.getPrimary().getBounds();
-    private static final int PREFERRED_HIGHT = (int) screenBounds.getHeight() - 100;
-    private static final int PREFERRED_WIDTH = PREFERRED_HIGHT + 100;
+    private static final int PREFERRED_HEIGHT = (int) screenBounds.getHeight() - 100;
+    private static final int PREFERRED_WIDTH = PREFERRED_HEIGHT + 100;
     // Longitud inicial de la serpiente
     private static final int INIT_LENGTH = 5;
     // Paneles para la GUI
@@ -48,7 +49,8 @@ public class SnakeGame extends Application {
     private static Pane game; // Juego
     private static VBox mainMenu; // Menú principal
     private Text score; // Puntuación del juego
-    private Text temporizador = new Text(0, 64, "00:00:00"); // Temporizador
+    private Text temporizador; // Temporizador
+    private Timeline timeline = new Timeline();
     private Circle food; // Comida
     private int segundos = 0; // Segundos del temporizador
     private Random random; // Control de aleatoriedad
@@ -65,7 +67,7 @@ public class SnakeGame extends Application {
 
     private void newFood() {
         int posX = random.nextInt(PREFERRED_WIDTH);
-        int posY = random.nextInt(PREFERRED_HIGHT);
+        int posY = random.nextInt(PREFERRED_HEIGHT);
         food = new Circle(posX, posY, 0);
         Image image = new Image(getClass().getResourceAsStream(images[random.nextInt(images.length)]));
         ImageView foddImage = new ImageView(image);
@@ -77,7 +79,7 @@ public class SnakeGame extends Application {
     }
 
     private void newSnake() {
-        snake = new Snake(PREFERRED_WIDTH / 2, PREFERRED_HIGHT / 2, 10); // d2 es el tamaño de la cabeza
+        snake = new Snake(PREFERRED_WIDTH / 2, PREFERRED_HEIGHT / 2, 10); // d2 es el tamaño de la cabeza
         game.getChildren().add(snake);
         for (int i = 0; i < INIT_LENGTH; i++) { // Agregar la cola
             newFood();
@@ -95,26 +97,26 @@ public class SnakeGame extends Application {
 
     private void move() {
         Platform.runLater(() -> {
-            int puntos = snake.getLength() - INIT_LENGTH;
             snake.step();
             adjustLocation();
             if (hit()) {
                 snake.eat(food, game);
-                score.setText("Score: " + puntos);
+                score.setText("Score: " + (snake.getLength() - INIT_LENGTH));
                 newFood();
             }
             if (gameOver()) {
                 jugabilidad.interrupt(); // detiene el juego
+                timeline.stop(); // detiene el temporizador
                 Platform.runLater(() -> {
 
                     TextInputDialog dialog = new TextInputDialog();
                     dialog.setTitle("Game Over");
-                    dialog.setHeaderText("Puntaje Obtenido: " + puntos);
+                    dialog.setHeaderText("Puntaje Obtenido: " + (snake.getLength() - INIT_LENGTH));
                     dialog.setContentText("Jugador:");
                     Optional<String> name = dialog.showAndWait();
 
                     if (name.isPresent() && (name.get() != null && !name.get().isEmpty())) {
-                        Puntaje actual = new Puntaje(name.get(), puntos);
+                        Puntaje actual = new Puntaje(name.get(), (snake.getLength() - INIT_LENGTH));
                         List<Puntaje> puntajes = historialPuntajes.getPuntajes();
                         if (historialPuntajes.getPuntajes().contains(actual)) {
                             Puntaje anterior = puntajes.get(puntajes.indexOf(actual));
@@ -143,20 +145,20 @@ public class SnakeGame extends Application {
             snake.setCenterX(0);
         }
         if (snake.getCenterY() < 0) {
-            snake.setCenterY(PREFERRED_HIGHT);
-        } else if (snake.getCenterY() > PREFERRED_HIGHT) {
+            snake.setCenterY(PREFERRED_HEIGHT);
+        } else if (snake.getCenterY() > PREFERRED_HEIGHT) {
             snake.setCenterY(0);
         }
     }
 
     private Pane game() {
         game = new Pane();
-        game.setPrefSize(PREFERRED_WIDTH, PREFERRED_HIGHT);
+        game.setPrefSize(PREFERRED_WIDTH, PREFERRED_HEIGHT);
         // Agregamos la imagen para el fondo del juego
         Image image = new Image(getClass().getResourceAsStream("Background2.jpg"));
         BackgroundImage fondo = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
-                new BackgroundSize(PREFERRED_WIDTH, PREFERRED_HIGHT, false, false, false, false));
+                new BackgroundSize(PREFERRED_WIDTH, PREFERRED_HEIGHT, false, false, false, false));
         game.setBackground(new Background(fondo));
 
         random = new Random();
@@ -164,18 +166,24 @@ public class SnakeGame extends Application {
         newFood();
 
         // Configuración de puntaje y tiempo transcurrido
-        score = new Text(0, 32, "Score: 0");
-        score.setFont(Font.font(15));
+        score = new Text(PREFERRED_WIDTH / 2, 32, "Score: 0");
+        score.setFont(Font.font(30));
+        score.setStyle("-fx-font-weight: bold");
         score.setFill(Color.WHITE);
-        temporizador.setFont(Font.font(15));
+        score.setTextAlignment(TextAlignment.CENTER);
+
+        temporizador = new Text(PREFERRED_WIDTH / 2 - 5, 64, "00:00:00");
+        temporizador.setFont(Font.font(30));
+        temporizador.setStyle("-fx-font-weight: bold");
         temporizador.setFill(Color.WHITE);
+        temporizador.setTextAlignment(TextAlignment.CENTER);
+        segundos = 0;
 
         // Creamos el Timeline para el funcionamiento del temporizador.
-        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             segundos++;
             temporizador.setText(segundosAtiempo(segundos));
-        })
-                                        );
+        }));
         timeline.setCycleCount(Timeline.INDEFINITE);
         // Iniciamos el Timeline
         timeline.play();
@@ -246,7 +254,7 @@ public class SnakeGame extends Application {
 
     private Pane menu() {
         mainMenu = new VBox();
-        mainMenu.setPrefSize(PREFERRED_WIDTH, PREFERRED_HIGHT);
+        mainMenu.setPrefSize(PREFERRED_WIDTH, PREFERRED_HEIGHT);
         mainMenu.getChildren().add(new Text("Menú Principal"));
         Button scores = new Button("Puntajes");
         scores.setDefaultButton(false);
