@@ -51,7 +51,7 @@ public class SnakeGame extends Application {
     private Text score; // Puntuación del juego
     private Text temporizador; // Temporizador
     private Timeline timeline = new Timeline();
-    private Circle food; // Comida
+    private Food food; // Comida
     private int segundos = 0; // Segundos del temporizador
     private Random random; // Control de aleatoriedad
     private Snake snake; // Serpiente
@@ -68,14 +68,14 @@ public class SnakeGame extends Application {
     private void newFood() {
         int posX = random.nextInt(PREFERRED_WIDTH);
         int posY = random.nextInt(PREFERRED_HEIGHT);
-        food = new Circle(posX, posY, 0);
-        Image image = new Image(getClass().getResourceAsStream(images[random.nextInt(images.length)]));
-        ImageView foddImage = new ImageView(image);
-        foddImage.setFitWidth(25);
-        foddImage.setFitHeight(25);
-        foddImage.relocate(posX - 10, posY - 10); // Centrar la imagen en la comida
-        game.getChildren().add(food);
-        game.getChildren().add(foddImage);
+        String imageString = images[random.nextInt(images.length)];
+        food = new Food(posX, posY, 0, imageString);
+        Image image = new Image(getClass().getResourceAsStream(imageString));
+        ImageView foodImage = new ImageView(image);
+        foodImage.setFitWidth(25);
+        foodImage.setFitHeight(25);
+        foodImage.relocate(posX - 10, posY - 10); // Centrar la imagen en la comida
+        game.getChildren().addAll(food, foodImage);
     }
 
     private void newSnake() {
@@ -101,6 +101,7 @@ public class SnakeGame extends Application {
             adjustLocation();
             if (hit()) {
                 snake.eat(food, game);
+                modificadorVelocidad = food.getImage().equals("brownie.png") ? 5 : 10;
                 score.setText("Score: " + (snake.getLength() - INIT_LENGTH));
                 newFood();
             }

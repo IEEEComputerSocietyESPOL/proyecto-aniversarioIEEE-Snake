@@ -91,7 +91,7 @@ public class Snake extends Circle {
         return tails.get(length - 1);
     }
 
-    public void eat(Circle food, Pane pane) {
+    public void eat(Food food, Pane pane) {
         Circle tail = endTail();
         // El cuerpo de la serpiente siempre es 2 pixeles mas pequeño que la cabeza
         food.setRadius(this.getRadius() - 2);
