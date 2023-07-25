@@ -1,0 +1,19 @@
+.table-view {
+    -fx-background-color: linear-gradient(to bottom, #240c34, #7021a5);
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-background-color: #240c2c;
+}
+
+.table-row-cell:even .table-cell {
+    -fx-background-color: #1d143c;
+    -fx-text-fill: white;
+}
+
+.table-row-cell:odd .table-cell {
+    -fx-background-color: #240c34;
+    -fx-text-fill: white;
+}

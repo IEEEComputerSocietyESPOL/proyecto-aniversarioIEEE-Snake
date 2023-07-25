@@ -6,8 +6,8 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -26,7 +26,6 @@ import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
@@ -43,32 +42,35 @@ public class SnakeGame extends Application {
     private static final int PREFERRED_HEIGHT = (int) screenBounds.getHeight() - 100;
     private static final int PREFERRED_WIDTH = PREFERRED_HEIGHT + 100;
     // Longitud inicial de la serpiente
-    private static final int INIT_LENGTH = 5;
+    private static final int INIT_LENGTH = 7;
     // Paneles para la GUI
     private static Scene scene = new Scene(new Pane());
     private static Pane game; // Juego
     private static VBox mainMenu; // Menú principal
     private Text score; // Puntuación del juego
     private Text temporizador; // Temporizador
+    private Text danger; // Alerta de brownie
     private Timeline timeline = new Timeline();
     private Food food; // Comida
     private int segundos = 0; // Segundos del temporizador
     private Random random; // Control de aleatoriedad
     private Snake snake; // Serpiente
-    private static int modificadorVelocidad = 10; // Aumento de velocidad de la serpiente
+    private static int modificadorVelocidad = 8; // Aumento de velocidad de la serpiente
     private Thread jugabilidad; // Hilo de ejecución del juego
+    private Thread brownie = new Thread(); // Hilo de ejecución del brownie
     private HistorialPuntajes historialPuntajes; // Manejar el historial de puntajes
     /*
      * Agregar las imágenes de la comida en la carpeta resources/proyecto con la
      * extensión correspondiente
      */
-    private String images[] = { "AP.png", "brownie.png",
-            "empanada.png", "encebollado.png", "menestra2.png", "pastelpn.png", "sanduchepng.png" };
+    private String foodArray[] = { "AP.png", "brownie.png",
+            "empanada.png", "encebollado.png", "menestra.png", "pastelpn.png", "sanduche.png" };
+    String simpleFood[] = { foodArray[2], foodArray[3], foodArray[4], foodArray[5], foodArray[6] };
 
-    private void newFood() {
+    private void newFood(String foodArray[]) {
         int posX = random.nextInt(PREFERRED_WIDTH);
         int posY = random.nextInt(PREFERRED_HEIGHT);
-        String imageString = images[random.nextInt(images.length)];
+        String imageString = foodArray[random.nextInt(foodArray.length)];
         food = new Food(posX, posY, 0, imageString);
         Image image = new Image(getClass().getResourceAsStream(imageString));
         ImageView foodImage = new ImageView(image);
@@ -82,7 +84,7 @@ public class SnakeGame extends Application {
         snake = new Snake(PREFERRED_WIDTH / 2, PREFERRED_HEIGHT / 2, 10); // d2 es el tamaño de la cabeza
         game.getChildren().add(snake);
         for (int i = 0; i < INIT_LENGTH; i++) { // Agregar la cola
-            newFood();
+            newFood(simpleFood);
             snake.eat(food, game);
         }
     }
@@ -101,11 +103,69 @@ public class SnakeGame extends Application {
             adjustLocation();
             if (hit()) {
                 snake.eat(food, game);
-                modificadorVelocidad = food.getImage().equals("brownie.png") ? 5 : 10;
+                modificadorVelocidad = food.getImage().equals("brownie.png") ? 4 : 8;
+                // Si la comida es un brownie, la serpiente tiene 5 segundos para comer algo más
+                // o muere
+                if (brownie.isAlive()) {
+                    brownie.interrupt();
+                    danger.setVisible(false);
+                    temporizador.setFill(Color.WHITE);
+                }
+                if (food.getImage().equals("brownie.png")) {
+                    temporizador.setFill(Color.RED);
+                    brownie = new Thread(() -> {
+                        try {
+                            danger.setVisible(true);
+                            Thread.sleep(5000);
+                            jugabilidad.interrupt(); // detiene el juego
+                            timeline.stop(); // detiene el temporizador
+                            Platform.runLater(() -> {
+
+                                TextInputDialog dialog = new TextInputDialog();
+                                dialog.setTitle("Game Over");
+                                dialog.setHeaderText("El brownie te cayó mal, bro\nPuntaje Obtenido: "
+                                        + (snake.getLength() - INIT_LENGTH));
+                                dialog.setContentText("Jugador:");
+                                Optional<String> name = dialog.showAndWait();
+
+                                if (name.isPresent() && (name.get() != null && !name.get().isEmpty())) {
+                                    Puntaje actual = new Puntaje(name.get(), (snake.getLength() - INIT_LENGTH));
+                                    List<Puntaje> puntajes = historialPuntajes.getPuntajes();
+                                    if (historialPuntajes.getPuntajes().contains(actual)) {
+                                        Puntaje anterior = puntajes.get(puntajes.indexOf(actual));
+                                        // Si el jugador existe y su puntaje actual es mayor, se actualiza el
+                                        // puntaje
+                                        if (anterior.getPuntaje() < actual.getPuntaje()) {
+                                            historialPuntajes.getPuntajes().remove(anterior);
+                                            historialPuntajes.agregarPuntaje(actual);
+                                            historialPuntajes.guardarPuntajes();
+                                        }
+                                        // Si es un jugador nuevo, agrega directamente al archivo
+                                    } else {
+                                        historialPuntajes.agregarPuntaje(actual);
+                                        historialPuntajes.guardarPuntajes();
+                                    }
+                                }
+                                scene.setRoot(menu());
+                            });
+                        } catch (InterruptedException ie) {
+                        }
+                    });
+                    brownie.setDaemon(true);
+                    brownie.start();
+                }
+                // Si la comida es un AP, la serpiente crece 4 veces más
+                if (food.getImage().equals("AP.png")) {
+                    for (int i = 0; i < 4; i++) {
+                        newFood(simpleFood);
+                        snake.eat(food, game);
+                    }
+                }
                 score.setText("Score: " + (snake.getLength() - INIT_LENGTH));
-                newFood();
+                newFood(foodArray);
             }
             if (gameOver()) {
+                modificadorVelocidad = 8;
                 jugabilidad.interrupt(); // detiene el juego
                 timeline.stop(); // detiene el temporizador
                 Platform.runLater(() -> {
@@ -137,6 +197,7 @@ public class SnakeGame extends Application {
                 });
             }
         });
+
     }
 
     private void adjustLocation() {
@@ -156,7 +217,7 @@ public class SnakeGame extends Application {
         game = new Pane();
         game.setPrefSize(PREFERRED_WIDTH, PREFERRED_HEIGHT);
         // Agregamos la imagen para el fondo del juego
-        Image image = new Image(getClass().getResourceAsStream("Background2.jpg"));
+        Image image = new Image(getClass().getResourceAsStream("Background.jpg"));
         BackgroundImage fondo = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
                 new BackgroundSize(PREFERRED_WIDTH, PREFERRED_HEIGHT, false, false, false, false));
@@ -164,7 +225,7 @@ public class SnakeGame extends Application {
 
         random = new Random();
         newSnake();
-        newFood();
+        newFood(foodArray);
 
         // Configuración de puntaje y tiempo transcurrido
         score = new Text(PREFERRED_WIDTH / 2, 32, "Score: 0");
@@ -180,6 +241,13 @@ public class SnakeGame extends Application {
         temporizador.setTextAlignment(TextAlignment.CENTER);
         segundos = 0;
 
+        danger = new Text(PREFERRED_WIDTH / 2 - 100, 80, "¡Alerta!\nCome algo antes de que el brownie te mate");
+        danger.setFont(Font.font(15));
+        danger.setStyle("-fx-font-weight: bold");
+        danger.setFill(Color.RED);
+        danger.setTextAlignment(TextAlignment.CENTER);
+        danger.setVisible(false);
+
         // Creamos el Timeline para el funcionamiento del temporizador.
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             segundos++;
@@ -189,16 +257,15 @@ public class SnakeGame extends Application {
         // Iniciamos el Timeline
         timeline.play();
 
-        game.getChildren().addAll(score, temporizador);
+        game.getChildren().addAll(score, temporizador, danger);
 
         // Hilo de ejecución del juego
         Runnable r = () -> {
             try {
                 for (;;) {
                     move();
-                    int puntos = snake.getLength() - INIT_LENGTH;
                     // Aumentar la velocidad de la serpiente cada modificadorVelocidad puntos
-                    Thread.sleep(100 / (1 + (puntos / modificadorVelocidad)));
+                    Thread.sleep(100 / (1 + (snake.getLength() / modificadorVelocidad)));
                 }
             } catch (InterruptedException ie) {
             }
@@ -229,8 +296,11 @@ public class SnakeGame extends Application {
         Stage puntajesStage = new Stage();
         puntajesStage.initModality(Modality.WINDOW_MODAL);
         puntajesStage.setTitle("Tabla de Puntajes");
+        puntajesStage.initOwner(scene.getWindow());
+        puntajesStage.getIcons().add(new Image(getClass().getResourceAsStream("icono.png")));
         puntajesStage.setResizable(false);
         VBox puntajesLayout = new VBox();
+        puntajesLayout.setStyle("-fx-background-color: linear-gradient(to bottom, #240c34, #7021a5);");
         puntajesLayout.setSpacing(10);
         puntajesLayout.setPadding(new Insets(10));
         TableView<Puntaje> tableView = obtenerTabla();
@@ -248,22 +318,45 @@ public class SnakeGame extends Application {
         TableColumn<Puntaje, Integer> scoreColumn = new TableColumn<>("Puntuación");
         scoreColumn.setCellValueFactory(new PropertyValueFactory<>("puntaje"));
         tableView.getColumns().addAll(playerNameColumn, scoreColumn);
-        int lastIndex = historialPuntajes.getPuntajes().size() >= 10 ? 10 : historialPuntajes.getPuntajes().size();
-        tableView.getItems().addAll(historialPuntajes.getPuntajes().subList(0, lastIndex));
+        tableView.getItems().addAll(historialPuntajes.getPuntajes());
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tableView.getStylesheets().add(getClass().getResource("table.css").toExternalForm());
         return tableView;
     }
 
     private Pane menu() {
         mainMenu = new VBox();
         mainMenu.setPrefSize(PREFERRED_WIDTH, PREFERRED_HEIGHT);
-        mainMenu.getChildren().add(new Text("Menú Principal"));
-        Button scores = new Button("Puntajes");
-        scores.setDefaultButton(false);
-        scores.setOnMouseClicked(eh -> showPuntajesWindow());
+        mainMenu.setAlignment(Pos.CENTER);
+        mainMenu.setSpacing(10);
+        mainMenu.setPadding(new Insets(10));
+
+        Image image = new Image(getClass().getResourceAsStream("Menu.png"));
+        BackgroundImage fondo = new BackgroundImage(image, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(PREFERRED_WIDTH, PREFERRED_HEIGHT, false, false, false, false));
+        mainMenu.setBackground(new Background(fondo));
+
+        String buttonStyle = "-fx-padding: 10px; -fx-pref-width: 400px; -fx-border-color: black; -fx-text-fill: white;"
+                +
+                "-fx-border-width: 2px; -fx-border-radius: 8px; -fx-background-color: linear-gradient(to right, #FF3CB4, #800080);"
+                +
+                "-fx-background-radius: 10px; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 20px;";
+
         Button start = new Button("Comenzar");
         start.setDefaultButton(true);
         start.setOnMouseClicked(eh -> scene.setRoot(game()));
-        mainMenu.getChildren().addAll(scores, start);
+        start.setStyle(buttonStyle);
+
+        Button scores = new Button("Puntajes");
+        scores.setDefaultButton(false);
+        scores.setOnMouseClicked(eh -> showPuntajesWindow());
+        scores.setStyle(buttonStyle);
+
+        VBox.setMargin(scores, new Insets(10, 0, 0, 0));
+
+        mainMenu.getChildren().addAll(scores, start); // Agregar los botones al contenedor intermedio
+
         return mainMenu;
     }
 
@@ -278,12 +371,13 @@ public class SnakeGame extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Snake Game!");
+        primaryStage.setTitle("Snake Game: Computer Society ESPOL Edition");
         historialPuntajes = new HistorialPuntajes("puntajes.csv");
         historialPuntajes.cargarPuntajes();
         scene.setRoot(menu());
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
+        primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("icono.png")));
         primaryStage.show();
     }
 
