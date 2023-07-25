@@ -63,7 +63,7 @@ public class SnakeGame extends Application {
      * extensión correspondiente
      */
     private String images[] = { "AP.png", "brownie.png",
-            "empanada.png", "encebollado.png", "menestra2.png", "pastelpn.png", "sanduchepng.png" };
+            "empanada.png", "encebollado.png", "menestra2.png", "pastelpn.png", "sanduchepng.png","logo.png" };
 
     private void newFood() {
         int posX = random.nextInt(PREFERRED_WIDTH);
@@ -255,14 +255,32 @@ public class SnakeGame extends Application {
 
     private Pane menu() {
         mainMenu = new VBox();
+        VBox buttonContainer = new VBox();
+        
+        Stop[] stops = new Stop[] { new Stop(0, Color.valueOf("#baffaa")), new Stop(1, Color.valueOf("#a9fff8")) };
+        LinearGradient gradient = new LinearGradient(0, 0, 0, 1, true, null, stops);
+        mainMenu.setBackground(new Background(new BackgroundFill(gradient, CornerRadii.EMPTY, null)));
         mainMenu.setPrefSize(PREFERRED_WIDTH, PREFERRED_HEIGHT);
+        
         mainMenu.getChildren().add(new Text("Menú Principal"));
+        mainMenu.setSpacing(10);
+        String buttonStyle = "-fx-background-color: #cfdfff; -fx-padding: 10px; -fx-pref-width: 200px; -fx-border-color: black; -fx-border-width: 2px; -fx-border-radius: 10px;";
+        
         Button scores = new Button("Puntajes");
         scores.setDefaultButton(false);
         scores.setOnMouseClicked(eh -> showPuntajesWindow());
+        scores.setMinWidth(200);
+        scores.setStyle(buttonStyle);
+        
         Button start = new Button("Comenzar");
         start.setDefaultButton(true);
         start.setOnMouseClicked(eh -> scene.setRoot(game()));
+        start.setMinWidth(200);
+        start.setStyle(buttonStyle);
+
+        buttonContainer.setAlignment(Pos.CENTER);
+        buttonContainer.getChildren().addAll(scores, start);
+               
         mainMenu.getChildren().addAll(scores, start);
         return mainMenu;
     }
